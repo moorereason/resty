@@ -16,9 +16,11 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"runtime"
 	"sort"
 	"strings"
+	"sync"
 )
 
 //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
@@ -93,13 +95,29 @@ func DetectContentType(body interface{}) string {
 	return contentType
 }
 
+var (
+	// Not for use directly.  Use IsJSONType() instead.
+	jsonCheck            *regexp.Regexp
+	compileJSONCheckOnce sync.Once
+
+	// Not for use directly.  Use IsXMLType() instead.
+	xmlCheck            *regexp.Regexp
+	compileXMLCheckOnce sync.Once
+)
+
 // IsJSONType method is to check JSON content type or not
 func IsJSONType(ct string) bool {
+	compileJSONCheckOnce.Do(func() {
+		jsonCheck = regexp.MustCompile(`(?i:(application|text)/(json|.*\+json|json\-.*)(;|$))`)
+	})
 	return jsonCheck.MatchString(ct)
 }
 
 // IsXMLType method is to check XML content type or not
 func IsXMLType(ct string) bool {
+	compileXMLCheckOnce.Do(func() {
+		xmlCheck = regexp.MustCompile(`(?i:(application|text)/(xml|.*\+xml)(;|$))`)
+	})
 	return xmlCheck.MatchString(ct)
 }
 
